@@ -1,0 +1,20 @@
+# Environments
+.venv/
+ENV/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+
+# Data & logs
+*.db
+logs/
+
+# Plots/exports
+*.png
+*.csv
