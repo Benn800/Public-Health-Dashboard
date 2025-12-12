@@ -57,3 +57,44 @@ source .venv/bin/activate
 
 # 3) Install dependencies
 pip install -r requirements.txt
+
+```
+
+## ▶️ Usage
+Make sure you have the OWID vaccinations.csv locally.
+```bash
+
+# Load CSV into SQLite
+python -m task1_public_health.src.app --db task1_public_health/data/public_health.db \
+  load-csv vaccinations.csv
+
+# List countries in DB
+python -m task1_public_health.src.app --db task1_public_health/data/public_health.db countries
+
+# Summarize metrics for a country (count/min/mean/max)
+python -m task1_public_health.src.app --db task1_public_health/data/public_health.db \
+  summary --country "United Kingdom" --start 2021-01-01
+
+# Plot a trend (e.g., fully vaccinated per hundred)
+python -m task1_public_health.src.app --db task1_public_health/data/public_health.db \
+  plot --country "United Kingdom" --field people_fully_vaccinated_per_hundred --out uk_trend.png
+
+# Export filtered rows to CSV
+python -m task1_public_health.src.app --db task1_public_health/data/public_health.db \
+  export --country "United Kingdom" --start 2021-01-01 --out uk_subset.csv
+```
+
+## ✅ Testing
+```bash
+pytest -q
+```
+
+## 🧩 Diagrams
+* **Use-Case Diagram**: user → (Load CSV, Filter, Summarize, Plot, Export).\
+* **Class Diagram**: CsvVaccinationSource, SqliteRepository, VaccinationRecord, services, charts, cli.\
+* **ER Diagram**: SQLite table vaccination_stats with unique key (location, iso_code, date) and index on (location, date).\
+
+## 🔗 Dataset Reference
+Our World in Data (OWID). COVID‑19 Vaccinations Dataset (vaccinations.csv).\
+https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations\
+
