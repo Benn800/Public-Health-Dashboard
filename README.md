@@ -86,11 +86,11 @@ pytest -q
 ```
 
 ## 🧩 Diagrams
-* **Use-Case Diagram**: user → (Load CSV, Filter, Summarize, Plot, Export).\
-* **Class Diagram**: CsvVaccinationSource, SqliteRepository, VaccinationRecord, services, charts, cli.\
-* **ER Diagram**: SQLite table vaccination_stats with unique key (location, iso_code, date) and index on (location, date).\
+* **Use-Case Diagram**: user → (Load CSV, Filter, Summarize, Plot, Export).
+* **Class Diagram**: CsvVaccinationSource, SqliteRepository, VaccinationRecord, services, charts, cli.
+* **ER Diagram**: SQLite table vaccination_stats with unique key (location, iso_code, date) and index on (location, date).
 
 ## 🔗 Dataset Reference
 Our World in Data (OWID). COVID‑19 Vaccinations Dataset (vaccinations.csv).\
-https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations\
+https://github.com/owid/covid-19-data/tree/master/public/data/vaccinations
 
