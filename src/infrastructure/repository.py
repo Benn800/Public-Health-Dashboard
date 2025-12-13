@@ -2,6 +2,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 from typing import Iterable, Dict, Any, Iterator, Optional
+from datetime import datetime, date
 
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS vaccination_stats (
@@ -59,8 +60,18 @@ class SqliteRepository:
             " :people_fully_vaccinated_per_hundred, :total_boosters_per_hundred"
             ");"
         )
+        
+        """convert date to ISO strings explicitly to avoid deprecation warnings 
+        and platform differences in adapters."""
+        converted_rows = []
+        for r in rows:
+            # make a shallow copy so we don't mutate caller data
+            rr = dict(r)
+            if rr.get("date") and isinstance(rr["date"], date):
+                rr["date"] = rr["date"].isoformat()
+            converted_rows.append(rr)
         with self._connect() as con:
-            cur = con.executemany(sql, rows)
+            cur = con.executemany(sql, converted_rows)
             return cur.rowcount or 0
 
     def query(self, *, country: Optional[str] = None,
@@ -82,7 +93,15 @@ class SqliteRepository:
         sql += " ORDER BY date ASC"
         with self._connect() as con:
             for row in con.execute(sql, params):
-                yield row
+                # convert sqlite Row to dict and parse date field into date object
+                d = dict(row)
+                if d.get("date"):
+                    try:
+                        d["date"] = datetime.fromisoformat(d["date"]).date()
+                    except Exception:
+                        # leave as-is if parsing fails
+                        pass
+                yield d
 
     def update_field(self, *, country: str, date: str, field: str, value: Any) -> int:
         assert field in {
