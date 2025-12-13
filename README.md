@@ -65,23 +65,19 @@ Make sure you have the OWID vaccinations.csv locally.
 ```bash
 
 # Load CSV into SQLite
-python -m task1_public_health.src.app --db task1_public_health/data/public_health.db `
-  load-csv data/raw/vaccinations.csv
+python -m src.app --db data/public_health.db load-csv data/raw/vaccinations.csv
 
 # List countries in DB
-python -m task1_public_health.src.app --db task1_public_health/data/public_health.db countries
+python -m src.app --db data/public_health.db countries
 
 # Summarize metrics for a country (count/min/mean/max)
-python -m task1_public_health.src.app --db task1_public_health/data/public_health.db \
-  summary --country "United Kingdom" --start 2021-01-01
+python -m src.app --db data/public_health.db summary --country "United Kingdom" --start 2021-01-01
 
 # Plot a trend (e.g., fully vaccinated per hundred)
-python -m task1_public_health.src.app --db task1_public_health/data/public_health.db \
-  plot --country "United Kingdom" --field people_fully_vaccinated_per_hundred --out uk_trend.png
+python -m src.app --db data/public_health.db plot --country "United Kingdom" --field people_fully_vaccinated_per_hundred --out uk_trend.png
 
 # Export filtered rows to CSV
-python -m task1_public_health.src.app --db task1_public_health/data/public_health.db \
-  export --country "United Kingdom" --start 2021-01-01 --out uk_subset.csv
+python -m src.app --db data/public_health.db export --country "United Kingdom" --start 2021-01-01 --out uk_subset.csv
 ```
 
 ## ✅ Testing
