@@ -17,3 +17,19 @@ def filter_records(records: Iterable[dict], *, country: str | None,
             continue
         out.append(r)
     return sorted(out, key=lambda x: x['date'])
+
+def summarize_numeric(records: Iterable[dict], field: str) -> Dict[str, float]:
+    # Return count/min/mean/max for numeric field
+    vals: List[float] = []
+    for r in records:
+        v = r.get(field)
+        if isinstance(v, (int, float)):
+            vals.append(float(v))
+    if not vals:
+        return {"count": 0, "min": 0.0, "mean": 0.0, "max": 0.0}
+    return {
+        "count": float(len(vals)),
+        "min": float(min(vals)),
+        "mean": float(statistics.fmean(vals)),
+        "max": float(max(vals)),
+    }
