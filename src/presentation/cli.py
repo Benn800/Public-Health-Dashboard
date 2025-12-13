@@ -65,58 +65,89 @@ def main(argv: list[str] | None = None) -> int:
     repo = SqliteRepository(args.db)
 
     if args.cmd == "load-csv":
-        src = CsvVaccinationSource(str(args.path))
-        rows = list(src.load())
-        inserted = repo.insert_many(rows)
-        log.info("Inserted %s rows into %s", inserted, args.db)
-        return 0
+        try:
+            src = CsvVaccinationSource(str(args.path))
+            rows = list(src.load())
+            inserted = repo.insert_many(rows)
+            log.info("Inserted %s rows into %s", inserted, args.db)
+            return 0
+        except Exception:
+            log.exception("CMD failed: %s", args.cmd)
+            return 1
+
 
     if args.cmd == "countries":
-        for c in repo.list_countries():
-            print(c)
-        return 0
+        try:
+            for c in repo.list_countries():
+                print(c)
+            return 0
+        except Exception:
+            log.exception("CMD failed: %s", args.cmd)
+            return 1
 
     if args.cmd in {"summary", "plot", "export"}:
-        start_d = _parse_date(args.start)
-        end_d = _parse_date(args.end)
-        rows = [dict(r) for r in repo.query(country=args.country, start=args.start, end=args.end)]
-        if not rows:
-            log.info("No rows match the criteria.")
-            return 0
+        try:
+            start_d = _parse_date(args.start)
+            end_d = _parse_date(args.end)
+            rows = [dict(r) for r in repo.query(country=args.country, start=args.start, end=args.end)]
+            if not rows:
+                log.info("No rows match the criteria.")
+                return 0
+        except Exception:
+            log.exception("CMD failed: %s", args.cmd)
+            return 1    
 
         if args.cmd == "summary":
-            filtered = filter_records(rows, country=args.country, start=start_d, end=end_d)
-            for field in (
-                "daily_vaccinations",
-                "people_vaccinated_per_hundred",
-                "people_fully_vaccinated_per_hundred",
-                "total_boosters_per_hundred",
-            ):
-                stats = summarize_numeric(filtered, field)
-                print(field, stats)
-            return 0
+            try:
+                filtered = filter_records(rows, country=args.country, start=start_d, end=end_d)
+                for field in (
+                    "daily_vaccinations",
+                    "people_vaccinated_per_hundred",
+                    "people_fully_vaccinated_per_hundred",
+                    "total_boosters_per_hundred",
+                ):
+                    stats = summarize_numeric(filtered, field)
+                    print(field, stats)
+                
+                log.info("CMD start: %s", args.cmd)
+                # For filter-based commands:
+                log.info("Filters: country=%s start=%s end=%s", args.country, args.start, args.end)
+                # After success:
+                log.info("CMD done: %s", args.cmd)
+                return 0
+            except Exception:
+                log.exception("CMD failed: %s", args.cmd)
+                return 1 
 
         if args.cmd == "plot":
-            filtered = filter_records(rows, country=args.country, start=start_d, end=end_d)
-            out = plot_trend(
-                filtered,
-                x_field="date",
-                y_field=args.field,
-                title=f"{args.country}: {args.field.replace('_',' ').title()} over time",
-                out_path=args.out,
-            )
-            log.info("Saved plot to %s", out)
-            return 0
+            try:            
+                filtered = filter_records(rows, country=args.country, start=start_d, end=end_d)
+                out = plot_trend(
+                    filtered,
+                    x_field="date",
+                    y_field=args.field,
+                    title=f"{args.country}: {args.field.replace('_',' ').title()} over time",
+                    out_path=args.out,
+                )
+                log.info("Saved plot to %s", out)
+                return 0
+            except Exception:
+                log.exception("CMD failed: %s", args.cmd)
+                return 1             
 
         if args.cmd == "export":
-            filtered = filter_records(rows, country=args.country, start=start_d, end=end_d)
-            import csv
-            args.out.parent.mkdir(parents=True, exist_ok=True)
-            with args.out.open("w", newline="", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=list(filtered[0].keys()))
-                w.writeheader()
-                w.writerows(filtered)
-            log.info("Exported %s rows to %s", len(filtered), args.out)
-            return 0
+            try:    
+                filtered = filter_records(rows, country=args.country, start=start_d, end=end_d)
+                import csv
+                args.out.parent.mkdir(parents=True, exist_ok=True)
+                with args.out.open("w", newline="", encoding="utf-8") as f:
+                    w = csv.DictWriter(f, fieldnames=list(filtered[0].keys()))
+                    w.writeheader()
+                    w.writerows(filtered)
+                log.info("Exported %s rows to %s", len(filtered), args.out)
+                return 0
+            except Exception:
+                log.exception("CMD failed: %s", args.cmd)
+                return 1 
 
     return 0

@@ -1,4 +1,6 @@
+
 from __future__ import annotations
+import logging
 import sqlite3
 from pathlib import Path
 from typing import Iterable, Dict, Any, Iterator, Optional
@@ -60,24 +62,32 @@ class SqliteRepository:
             " :people_fully_vaccinated_per_hundred, :total_boosters_per_hundred"
             ");"
         )
-        
-        """convert date to ISO strings explicitly to avoid deprecation warnings 
-        and platform differences in adapters."""
+
+        # Convert date to ISO strings explicitly to avoid adapter differences.
         converted_rows = []
         for r in rows:
-            # make a shallow copy so we don't mutate caller data
-            rr = dict(r)
+            rr = dict(r)  # shallow copy
             if rr.get("date") and isinstance(rr["date"], date):
                 rr["date"] = rr["date"].isoformat()
             converted_rows.append(rr)
+
         with self._connect() as con:
             cur = con.executemany(sql, converted_rows)
-            return cur.rowcount or 0
+            rowcount = cur.rowcount or 0
 
-    def query(self, *, country: Optional[str] = None,
-              start: Optional[str] = None, end: Optional[str] = None) -> Iterator[sqlite3.Row]:
+        # ✅ Add repo logs here
+        log = logging.getLogger("repo")
+        log.info("Inserted rows (accepted): %d", rowcount)
+
+        return rowcount
+
+    def query(
+        self, *, country: Optional[str] = None,
+        start: Optional[str] = None, end: Optional[str] = None
+    ) -> Iterator[Dict[str, Any]]:
         where = []
         params: Dict[str, Any] = {}
+
         if country:
             where.append("location = :country")
             params["country"] = country
@@ -87,13 +97,15 @@ class SqliteRepository:
         if end:
             where.append("date <= :end")
             params["end"] = end
+
         sql = "SELECT * FROM vaccination_stats"
         if where:
             sql += " WHERE " + " AND ".join(where)
         sql += " ORDER BY date ASC"
+
+        out: list[Dict[str, Any]] = []
         with self._connect() as con:
             for row in con.execute(sql, params):
-                # convert sqlite Row to dict and parse date field into date object
                 d = dict(row)
                 if d.get("date"):
                     try:
@@ -101,19 +113,36 @@ class SqliteRepository:
                     except Exception:
                         # leave as-is if parsing fails
                         pass
-                yield d
+                out.append(d)
+
+        # ✅ Add repo logs here
+        log = logging.getLogger("repo")
+        n_rows = len(out)
+        log.debug("Query(country=%s, start=%s, end=%s) -> %d rows", country, start, end, n_rows)
+
+        # Yield after logging
+        for d in out:
+            yield d
 
     def update_field(self, *, country: str, date: str, field: str, value: Any) -> int:
         assert field in {
-            "total_vaccinations","people_vaccinated","people_fully_vaccinated",
-            "total_boosters","daily_vaccinations",
-            "total_vaccinations_per_hundred","people_vaccinated_per_hundred",
-            "people_fully_vaccinated_per_hundred","total_boosters_per_hundred",
+            "total_vaccinations", "people_vaccinated", "people_fully_vaccinated",
+            "total_boosters", "daily_vaccinations",
+            "total_vaccinations_per_hundred", "people_vaccinated_per_hundred",
+            "people_fully_vaccinated_per_hundred", "total_boosters_per_hundred",
         }, f"Unsupported field: {field}"
+
         sql = f"UPDATE vaccination_stats SET {field} = :value WHERE location=:c AND date=:d"
         with self._connect() as con:
             cur = con.execute(sql, {"value": value, "c": country, "d": date})
-            return cur.rowcount or 0
+            rowcount = cur.rowcount or 0
+
+        # Optional: log updates at DEBUG (less noisy)
+        logging.getLogger("repo").debug(
+            "Update field=%s for country=%s date=%s -> %d row(s)",
+            field, country, date, rowcount
+        )
+        return rowcount
 
     def delete_row(self, *, country: str, date: str) -> int:
         with self._connect() as con:
@@ -121,9 +150,21 @@ class SqliteRepository:
                 "DELETE FROM vaccination_stats WHERE location=:c AND date=:d",
                 {"c": country, "d": date},
             )
-            return cur.rowcount or 0
+            rowcount = cur.rowcount or 0
+
+        # Optional: log deletes at DEBUG
+        logging.getLogger("repo").debug(
+            "Delete country=%s date=%s -> %d row(s)", country, date, rowcount
+        )
+        return rowcount
 
     def list_countries(self) -> list[str]:
         with self._connect() as con:
-            rows = con.execute("SELECT DISTINCT location FROM vaccination_stats ORDER BY location").fetchall()
-            return [r[0] for r in rows]
+            rows = con.execute(
+                "SELECT DISTINCT location FROM vaccination_stats ORDER BY location"
+            ).fetchall()
+        countries = [r[0] for r in rows]
+
+        # Optional: log list size at DEBUG
+        logging.getLogger("repo").debug("list_countries -> %d", len(countries))
+        return countries
