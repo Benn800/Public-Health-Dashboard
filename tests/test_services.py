@@ -12,6 +12,11 @@ def test_filter_records_by_country_and_date():
     assert len(out) == 1 and out[0]["v"] == 2
 
 def test_summarize_numeric_handles_empty():
-    assert summarize_numeric([], "x") == {"count": 0, "min": 0.0, "mean": 0.0, "max": 0.0}    
+    assert summarize_numeric([], "x") == {"count": 0, "min": 0.0, "mean": 0.0, "max": 0.0} 
+
+def test_summarize_numeric_basic():
+    rows = [{"x": 10}, {"x": None}, {"x": 30}]
+    s = summarize_numeric(rows, "x")
+    assert s["count"] == 2 and s["mean"] == 20.0 and s["max"] == 30.0
 
 
