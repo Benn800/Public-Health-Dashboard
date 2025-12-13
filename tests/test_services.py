@@ -1,6 +1,6 @@
 
 from datetime import date
-from src.domain.services import filter_records, summarize_numeric
+from src.domain.services import filter_records
 
 def test_filter_records_by_country_and_date():
     rows = [
