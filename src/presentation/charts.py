@@ -11,8 +11,17 @@ matplotlib.rcParams.update({"font.size": 10})
 
 def plot_trend(rows: Iterable[dict], *, x_field: str, y_field: str, title: str,
                out_path: Path | str) -> Path:
-    dates = [r[x_field] for r in rows if r.get(x_field) is not None]
-    ys = [r[y_field] for r in rows if r.get(y_field) is not None]
+    # keep only rows that have both x and y values to avoid length mismatches
+    pairs = [
+        (r.get(x_field), r.get(y_field))
+        for r in rows
+        if r.get(x_field) is not None and r.get(y_field) is not None
+    ]
+    # sort by x (typically date) for consistent plotting
+    pairs.sort(key=lambda t: t[0])
+    dates = [p[0] for p in pairs]
+    ys = [p[1] for p in pairs]
+
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
 
