@@ -1,5 +1,5 @@
 from pathlib import Path
-from task1_public_health.src.infrastructure.data_sources.csv_source import CsvVaccinationSource
+from src.infrastructure.data_sources.csv_source import CsvVaccinationSource
 
 def test_csv_source_normalizes_and_yields(tmp_path: Path):
     csv = tmp_path / "mini.csv"
