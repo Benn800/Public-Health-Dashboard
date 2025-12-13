@@ -65,8 +65,8 @@ Make sure you have the OWID vaccinations.csv locally.
 ```bash
 
 # Load CSV into SQLite
-python -m task1_public_health.src.app --db task1_public_health/data/public_health.db \
-  load-csv vaccinations.csv
+python -m task1_public_health.src.app --db task1_public_health/data/public_health.db `
+  load-csv data/raw/vaccinations.csv
 
 # List countries in DB
 python -m task1_public_health.src.app --db task1_public_health/data/public_health.db countries
