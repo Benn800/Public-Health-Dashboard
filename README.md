@@ -28,18 +28,58 @@ The tool loads a public CSV, cleans and normalizes fields, stores data in **SQLi
 
 
 ## 📂 Project Structure
-task1_public_health/ \
-├─ src/ \
-│  ├─ app.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # Entry point\
-│  ├─ config.py  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # Config constants\
-│  ├─ logging_conf.py   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # Logging setup\
-│  ├─ domain/       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # Business logic\
-│  ├─ infrastructure/  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # Data sources & repository\
-│  └─ presentation/    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # CLI & charts\
-├─ tests/              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # Pytest unit tests\
-├─ data/              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # SQLite DB\
-├─ logs/              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  # Log files\
-└─ README.md\
+```
+task_1_PublicHealth/
+├── README.md                                # Project documentation
+├── requirements.txt                         # Python dependencies
+├── requirements_moscow.csv                  # Requirements with MoSCoW prioritization
+│
+├── src/                                     # Source code
+│   ├── __init__.py                          # Package initializer
+│   ├── app.py                               # Application entry point
+│   ├── config.py                            # Configuration constants
+│   ├── logging_conf.py                      # Logging setup and configuration
+│   │
+│   ├── domain/                              # Business logic layer
+│   │   └── services.py                      # Pure domain services (filtering, summaries)
+│   │   
+│   │
+│   ├── infrastructure/                      # Data access layer
+│   │   ├── repository.py                    # SQLite repository for vaccination data
+│   │   └── data_sources/                    # Data source abstractions
+│   │       ├── base.py                      # Abstract DataSource interface
+│   │       └── csv_source.py                # CSV data source implementation
+│   │      
+│   │   
+│   │
+│   └── presentation/                        # User interface layer
+│       ├── cli.py                           # Command-line interface
+│       └── charts.py                        # Visualization utilities (matplotlib)
+│      
+│   
+│   
+│
+├── tests/                                   # Test suite (TDD approach)
+│   ├── test_services.py                     # Unit tests for domain services
+│   ├── test_csv_source.py                   # Tests for CSV data source
+│   ├── test_repository.py                   # Tests for repository operations
+│   └── test_cli_smoke.py                    # CLI smoke tests
+│   
+│
+├── data/                                    # Data storage
+│   ├── public_health.db                     # SQLite database
+│   └── raw/                                 # Raw data files
+│       └── vaccinations.csv                 # OWID vaccination dataset
+│
+├── logs/                                    # Application logs
+│   └── app.log                              # Rotating log file
+│
+└── uml_diagrams/                            # Software design diagrams
+    ├── class_diagram.png                    # Class diagram
+    ├── er_diagram.png                       # Entity-relationship diagram
+    └── use_case.png                         # Use-case diagram
+
+```
 
 
 ## 🚀 Installation
