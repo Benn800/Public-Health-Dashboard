@@ -1,4 +1,9 @@
 from __future__ import annotations
+"""Plot utilities for simple time-series charts.
+
+We prefer matplotlib for its ubiquity and file-output stability.
+The function expects pre-filtered rows and writes a PNG to disk.
+"""
 from pathlib import Path
 from typing import Iterable
 import matplotlib
@@ -11,6 +16,10 @@ matplotlib.rcParams.update({"font.size": 10})
 
 def plot_trend(rows: Iterable[dict], *, x_field: str, y_field: str, title: str,
                out_path: Path | str) -> Path:
+    """Render a line chart for (x_field vs y_field) and save to PNG.
+
+    Rows missing either x or y are skipped. Output directory is created.
+    """
     # keep only rows that have both x and y values to avoid length mismatches
     pairs = [
         (r.get(x_field), r.get(y_field))

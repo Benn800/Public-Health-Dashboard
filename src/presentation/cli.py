@@ -1,4 +1,18 @@
 from __future__ import annotations
+"""Command-line interface (CLI)
+
+This module wires user commands to the underlying architecture:
+    - load-csv: ingest and normalize OWID CSV into SQLite
+    - countries: list distinct locations available
+    - summary: compute simple descriptive stats on key fields
+    - plot: render a time-series trend to a PNG file
+    - export: write filtered rows to CSV for downstream analysis
+
+Design notes:
+    - Parsing is done with argparse for minimal deps and clarity.
+    - Logging is file-based (see logging_conf) to keep CLI output clean.
+    - Domain services remain pure; repository handles persistence.
+"""
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -14,10 +28,16 @@ from ..config import DEFAULT_DB_PATH
 
 
 def _parse_date(s: Optional[str]):
+    """Best-effort ISO date parsing.
+
+    Accepts YYYY-MM-DD strings and returns datetime.date or None.
+    Errors propagate to caller where they are handled.
+    """
     return datetime.fromisoformat(s).date() if s else None
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Construct the CLI parser with all subcommands and options."""
     p = argparse.ArgumentParser(
         description=(
             "Public Health Data Insights Tool: load OWID vaccination CSV, "
@@ -29,14 +49,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub = p.add_subparsers(dest="cmd", required=True)
 
+    # Ingestion: one-shot CSV -> SQLite load
     s = sub.add_parser("load-csv", help="Load a vaccination CSV into the database")
     s.add_argument("path", type=Path, help="Path to vaccinations.csv")
 
+    # Descriptive statistics on selected fields for a filtered slice
     s = sub.add_parser("summary", help="Summarize metrics for a country/date range")
     s.add_argument("--country", required=True)
     s.add_argument("--start", default=None)
     s.add_argument("--end", default=None)
 
+    # Plot time-series for a numeric field into a PNG
     s = sub.add_parser("plot", help="Create a trend plot for a field")
     s.add_argument("--country", required=True)
     s.add_argument("--field", default="people_fully_vaccinated_per_hundred")
@@ -44,6 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--end", default=None)
     s.add_argument("--out", type=Path, default=Path("plot.png"))
 
+    # Export filtered rows for downstream analysis or sharing
     s = sub.add_parser("export", help="Export filtered rows to CSV")
     s.add_argument("--country", required=True)
     s.add_argument("--start", default=None)
@@ -56,6 +80,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Entry point for CLI; returns process exit code.
+
+    Each subcommand is protected with try/except to ensure
+    informative logs and non-zero exit codes on failures.
+    """
     parser = build_parser()
     args = parser.parse_args(argv)
 

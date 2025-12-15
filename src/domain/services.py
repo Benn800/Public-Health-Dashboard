@@ -1,11 +1,20 @@
 from __future__ import annotations
+"""Pure domain services: filtering and summaries.
+
+These functions operate purely on in-memory records (list/dict),
+which makes them deterministic and straightforward to unit test.
+They intentionally avoid I/O and external state.
+"""
 from typing import Iterable, Dict, List
 import statistics
 from datetime import date
 
 def filter_records(records: Iterable[dict], *, country: str | None,
                    start: date | None, end: date | None) -> List[dict]:
-    # Pure filter by country and optional date range
+    """Filter records by country and optional  date range.
+
+    Returns records sorted by `date`.
+    """
     out: List[dict] = []
     for r in records:
         if country and r.get('location') != country:
@@ -19,7 +28,10 @@ def filter_records(records: Iterable[dict], *, country: str | None,
     return sorted(out, key=lambda x: x['date'])
 
 def summarize_numeric(records: Iterable[dict], field: str) -> Dict[str, float]:
-    # Return count/min/mean/max for numeric field
+    """Compute count/min/mean/max for a numeric field.
+
+    Non-numeric and missing values are ignored. Empty inputs yield zeros.
+    """
     vals: List[float] = []
     for r in records:
         v = r.get(field)

@@ -1,14 +1,20 @@
 from __future__ import annotations
+"""Central logging configuration.
+
+We use a rotating file handler to keep CLI output clean while
+preserving detailed diagnostics for reproducibility and debugging.
+"""
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from .config import LOG_FILE
 
 
-
-# src/logging_conf.py
-
 def setup_logging(log_path: Path | None = None) -> None:
+    """Configure a rotating file logger (max ~1MB, 3 backups).
+
+    Console logging is disabled to keep CLI outputs focused on results.
+    """
     import logging
     from logging.handlers import RotatingFileHandler
     from pathlib import Path
@@ -19,11 +25,6 @@ def setup_logging(log_path: Path | None = None) -> None:
 
     root = logging.getLogger()
     root.setLevel(logging.INFO)
-
-    # REMOVE the console handler entirely:
-    # ch = logging.StreamHandler()
-    # ch.setLevel(logging.INFO)
-    # ch.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
 
     fh = RotatingFileHandler(log_file, maxBytes=1_000_000, backupCount=3)
     fh.setLevel(logging.INFO)

@@ -31,7 +31,7 @@ def test_insert_many_converts_date_to_iso(tmp_path: Path):
         "people_fully_vaccinated_per_hundred": None, "total_boosters_per_hundred": None,
     }])
 
-    # Raw DB value should be ISO string
+    # Direct DB query should return ISO date string
     with sqlite3.connect(db) as con:
         raw_date = con.execute("SELECT date FROM vaccination_stats").fetchone()[0]
     assert raw_date == "2021-01-02"

@@ -1,5 +1,17 @@
-
 from __future__ import annotations
+"""SQLite repository for vaccination statistics.
+
+Responsibilities:
+    - Ensure schema and indexes exist on first use
+    - Insert normalized rows with idempotency (INSERT OR IGNORE)
+    - Query by filters with typed date conversion
+    - Utility operations: list_countries; (update/delete kept minimal)
+
+Design choices:
+    - Use sqlite3 directly to reduce dependencies and keep behavior explicit.
+    - Store dates as ISO strings in DB; parse back to date objects on read.
+    - Unique constraint on (location, iso_code, date) protects data integrity.
+"""
 import logging
 import sqlite3
 from pathlib import Path
@@ -47,6 +59,11 @@ class SqliteRepository:
                 con.execute(ddl)
 
     def insert_many(self, rows: Iterable[Dict[str, Any]]) -> int:
+        """Bulk insert rows using INSERT OR IGNORE.
+
+        - Dates are converted to ISO strings to avoid adapter ambiguity.
+        - Returns number of accepted rows; ignored rows do not count.
+        """
         sql = (
             "INSERT OR IGNORE INTO vaccination_stats ("
             "location, iso_code, date,"
@@ -66,7 +83,7 @@ class SqliteRepository:
         # Convert date to ISO strings explicitly to avoid adapter differences.
         converted_rows = []
         for r in rows:
-            rr = dict(r)  # shallow copy
+            rr = dict(r)
             if rr.get("date") and isinstance(rr["date"], date):
                 rr["date"] = rr["date"].isoformat()
             converted_rows.append(rr)
@@ -85,6 +102,11 @@ class SqliteRepository:
         self, *, country: Optional[str] = None,
         start: Optional[str] = None, end: Optional[str] = None
     ) -> Iterator[Dict[str, Any]]:
+        """Query rows with optional filters and yield dicts.
+
+        Inputs `start`/`end` are ISO strings for consistency with storage;
+        outputs have `date` coerced back to datetime.date when possible.
+        """
         where = []
         params: Dict[str, Any] = {}
 
@@ -115,7 +137,7 @@ class SqliteRepository:
                         pass
                 out.append(d)
 
-        # ✅ Add repo logs here
+        # Log useful query metadata 
         log = logging.getLogger("repo")
         n_rows = len(out)
         log.debug("Query(country=%s, start=%s, end=%s) -> %d rows", country, start, end, n_rows)
@@ -125,6 +147,11 @@ class SqliteRepository:
             yield d
 
     def update_field(self, *, country: str, date: str, field: str, value: Any) -> int:
+        """Update a single numeric field for a specific (country, date).
+
+        Note: In typical research workflows data is treated as immutable; this
+        helper exists for test coverage and rare correction scenarios.
+        """
         assert field in {
             "total_vaccinations", "people_vaccinated", "people_fully_vaccinated",
             "total_boosters", "daily_vaccinations",
@@ -145,6 +172,11 @@ class SqliteRepository:
         return rowcount
 
     def delete_row(self, *, country: str, date: str) -> int:
+        """Delete a row by (country, date). Used primarily in tests.
+
+        Prefer reloading corrected source data over destructive edits in
+        production workflows to preserve provenance.
+        """
         with self._connect() as con:
             cur = con.execute(
                 "DELETE FROM vaccination_stats WHERE location=:c AND date=:d",
@@ -159,6 +191,7 @@ class SqliteRepository:
         return rowcount
 
     def list_countries(self) -> list[str]:
+        """Return distinct locations sorted alphabetically."""
         with self._connect() as con:
             rows = con.execute(
                 "SELECT DISTINCT location FROM vaccination_stats ORDER BY location"

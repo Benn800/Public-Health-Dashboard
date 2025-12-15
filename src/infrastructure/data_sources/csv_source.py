@@ -1,5 +1,16 @@
 # src/infrastructure/data_sources/csv_source.py
 from __future__ import annotations
+"""CSV data source for OWID vaccination dataset.
+
+Reads a CSV via pandas, applies minimal but essential cleaning:
+    - Coerce `date` to datetime.date (drop rows with invalid date/location)
+    - Coerce known numeric columns to floats/ints where possible
+    - Normalize output to a stable subset of fields used by the repo
+
+Rationale:
+    - Keep normalization simple and transparent for research reproducibility.
+    - Avoid failing on unexpected columns; missing fields are filled with None.
+"""
 from typing import Iterable, Dict
 import logging
 import pandas as pd
@@ -24,21 +35,21 @@ class CsvVaccinationSource(DataSource):
         # 1) Announce which CSV path we’re loading
         log.info("Loading CSV: %s", self.path)
 
-        # 2) Read the CSV
+        # 2) Read the CSV (low_memory=False trades memory for fewer type guesses)
         df = pd.read_csv(self.path, low_memory=False)
 
         # 3) Log columns and row count BEFORE cleaning
         log.debug("CSV columns: %s", list(df.columns))
         log.info("CSV rows read: %d (before cleaning)", len(df))
 
-        # 4) Coerce types
+        # 4) Coerce types (invalid entries become NaN and are handled)
         if "date" in df.columns:
             df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
         for col in NUMERIC_COLS:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        # 5) Essential cleaning (drop invalid location/date)
+        # 5) Essential cleaning (drop invalid location/date to ensure DB constraints)
         df = df.dropna(subset=["location", "date"])
 
         # 6) Log row count AFTER cleaning
