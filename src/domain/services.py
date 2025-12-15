@@ -20,9 +20,9 @@ def filter_records(records: Iterable[dict], *, country: str | None,
         if country and r.get('location') != country:
             continue
         d = r.get('date')
-        if start and d < start:
+        if start and d is not None and d < start:
             continue
-        if end and d > end:
+        if end and d is not None and d > end:
             continue
         out.append(r)
     return sorted(out, key=lambda x: x['date'])
